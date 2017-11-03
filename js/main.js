@@ -36,8 +36,8 @@ var serviceAdaptSettings = {
 // дата 19.09.2017
 // http://admin.geliospro.com/sdk/?login=root&pass=Gelios755&svc=get_unit_msgs&params={"id_unit":54696,"from":1505768400,"to":1505854799,"fields":"lat,lon"} 
 
-
 var track = {
+    
     initialTrack: [
         [53.9045, 27.5615]
     ],
@@ -46,7 +46,26 @@ var track = {
     coordsToString: function(index) {
         var coordsString = this.initialTrack[index][0] + "," + this.initialTrack[index][1];
         return coordsString;
-    }
+    },
+
+    getInitialTrack: (function() {
+        var requestInitialTrack = new XMLHttpRequest();
+        requestInitialTrack.open("GET", "http://admin.geliospro.com/sdk/?login=root&pass=Gelios755&svc=get_unit_msgs&params={\"id_unit\":54696,\"from\":1505768400,\"to\":1505854799,\"fields\":\"lat,lon\"}");
+        requestInitialTrack.onreadystatechange = setInitialtrackCoords;
+        requestInitialTrack.send();
+
+        function setInitialtrackCoords() {
+            if (request.readyState == 4) {
+                var status = request.status;
+                if (status == 200) {
+                    var response = JSON.parse(request.responseText);
+                    console.log(response);
+                    
+                }
+            }
+        }
+    })
+
 }
 
 // Добавляем оригинальный трек
@@ -54,19 +73,20 @@ var polyline = L.polyline(latlngs, {color: 'red'}).addTo(mymap);
 
 
 var request = new XMLHttpRequest();
+
+request.open("GET", "http://router.project-osrm.org/" + serviceConnectionSettings.url() + track.coordsToString(0));
+request.onreadystatechange = reqReadyStateChange;
+request.send();
+
+
 function reqReadyStateChange() {
     if (request.readyState == 4) {
         var status = request.status;
         if (status == 200) {
             var response = JSON.parse(request.responseText);
             console.log(response);
-            var marker = L.marker([response.waypoints[0].location[0], response.waypoints[0].location[1]]).addTo(mymap);
-            mymap.setView([response.waypoints[0].location[0], response.waypoints[0].location[1]], 10);
-
+            var marker = L.marker([response.waypoints[0].location[1], response.waypoints[0].location[0]]).addTo(mymap);
+            mymap.setView([response.waypoints[0].location[1], response.waypoints[0].location[0]], 9);
         }
     }
 }
-
-request.open("GET", "http://router.project-osrm.org/" + serviceConnectionSettings.url() + track.coordsToString(0));
-request.onreadystatechange = reqReadyStateChange;
-request.send();
